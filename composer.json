@@ -1,0 +1,23 @@
+{
+	"name" : "isrp/isrp-api",
+	"authors" : [{
+			"name" : "Oded Arbel",
+			"email" : "oded@geek.co.il",
+			"homepage" : "https://geek.co.il"
+		}
+	],
+	"description" : "ISRP API Services",
+	"require" : {
+		"slim/slim" : "^3.1",
+		"slim/php-view" : "^2.0",
+		"monolog/monolog" : "^1.17",
+		"react/http" : "^0.8.3",
+		"crazygoat/slim-reactor" : "^0.2",
+		"blockspring/blockspring" : "dev-master"
+	},
+	"autoload" : {
+		"psr-0" : {
+			"Isrp" : "src"
+		}
+	}
+}
