@@ -6,7 +6,10 @@ use Isrp\Service\RouteConfiguration;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-require_once VENDOR_DIR . '/blockspring/blockspring.php';
+if (file_exists(VENDOR_DIR . '/blockspring/blockspring.php'))
+	require_once VENDOR_DIR . '/blockspring/blockspring.php';
+else
+	require_once VENDOR_DIR . '/blockspring/blockspring/blockspring.php';
 
 class DragonClub extends Controller {
 	
