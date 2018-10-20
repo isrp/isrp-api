@@ -1,9 +1,24 @@
 version: 2
 jobs:
- build:
-   machine: true
-   steps:
-     - checkout
-     - run: docker build -t isrp/isrp-api:latest .
-     - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-     - run: docker push isrp/isrp-api:latest
+  build_release:
+    machine: true
+    branches:
+      only:
+        - master
+    steps:
+      - checkout
+      - run: docker build -t isrp/isrp-api:latest .
+      - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run: docker push isrp/isrp-api:latest
+
+  build_develop:
+    machine: true
+    branches:
+      only:
+        - develop
+        - release/.*
+    steps:
+      - checkout
+      - run: docker build -t isrp/isrp-api:latest .
+      - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run: docker push isrp/isrp-api:develop
