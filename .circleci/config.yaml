@@ -1,15 +1,42 @@
 version: 2
 jobs:
   build_release:
-    machine: true
+    docker:
+      - image: docker:17.05.0-ce-git
     branches:
       only:
         - master
     steps:
       - checkout
-      - run: docker build -t isrp/isrp-api:latest .
-      - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run: docker push isrp/isrp-api:latest
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=app -t isrp/isrp-api:latest .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
+      - deploy:
+          name: Push application Docker image
+          command: |
+            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+            docker push isrp/isrp-api:latest
 
   build_develop:
     machine: true
@@ -19,6 +46,32 @@ jobs:
         - release/.*
     steps:
       - checkout
-      - run: docker build -t isrp/isrp-api:latest .
-      - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run: docker push isrp/isrp-api:develop
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=app -t isrp/isrp-api:latest .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
+      - deploy:
+          name: Push application Docker image
+          command: |
+            docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+            docker push isrp/isrp-api:develop
