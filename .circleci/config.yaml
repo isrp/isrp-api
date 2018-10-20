@@ -1,6 +1,7 @@
 version: 2
 jobs:
   build_release:
+    working_directory: /app
     docker:
       - image: docker:18.06.1-ce
     branches:
@@ -39,6 +40,7 @@ jobs:
             docker push isrp/isrp-api:latest
 
   build_develop:
+    working_directory: /app
     docker:
       - image: docker:18.06.1-ce
     branches:
