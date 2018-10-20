@@ -6,10 +6,7 @@ use Isrp\Service\RouteConfiguration;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-if (file_exists(VENDOR_DIR . '/blockspring/blockspring.php'))
-	require_once VENDOR_DIR . '/blockspring/blockspring.php';
-else
-	require_once VENDOR_DIR . '/blockspring/blockspring/blockspring.php';
+use Isrp\Tools\GoogleSheets;
 
 class DragonClub extends Controller {
 	
@@ -17,17 +14,18 @@ class DragonClub extends Controller {
 	
 	private $clubMembers = null;
 	private $loadTimestamp = 0;
-	private $dragonURL;
+	private $dragonSheet;
 	
 	public function __construct($app) {
 		parent::__construct($app);
-		$this->dragonURL = getenv('DRAGON_CLUB_URL');
+		$this->dragonSheet = getenv('DRAGON_CLUB_SHEET');
 	}
 	
 	public function getRoutes() {
 		return [
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
+			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
 		];
 	}
 
@@ -47,6 +45,17 @@ class DragonClub extends Controller {
 		return $res->withJson($card, 200,  JSON_UNESCAPED_UNICODE);
 	}
 	
+	public function checkMemberStatus(Request $req, Response $res, array $args) {
+		$card = $this->getDragonCardByMemberNumber($args['id']);
+		if ($card === false)
+			return $res->withJson(['status' => false],404);
+		$expiration = clone $card['Timestamp'];
+		$expiration->add(new \DateInterval("P1Y"));
+		if ($expiration->getTimestamp() < time())
+			return $res->withJson(['status' => false],200);
+		return $res->withJson(['status' => true],200);
+	}
+	
 	/**
 	 * Retrieve a list of dragon members from the database specified under the dragon-members-url
 	 * setting. The resulting array contains a list of records, for each dragon card record. Each
@@ -54,19 +63,12 @@ class DragonClub extends Controller {
 	 * @return array list of dragon members
 	 */
 	private function dragonMembers() {
-		//putenv('BLOCKSPRING_URL=http://sender.blockspring.com');
 		if (!is_null($this->clubMembers) and ($this->loadTimestamp + static::CACHE_TIME) > time())
 			return $this->clubMembers;
 		
-		$this->info("Loading dragon memebers from " . $this->dragonURL);
-		$resp = \Blockspring::runParsed("query-public-google-spreadsheet", [
-			"query" => "SELECT E, C, D, M",
-			"url" => $this->dragonURL,
-		], [
-			"api_key" => "br_91525_bc9d6103a36fc70c5101fddea3d35bc3b23f3242"
-		])->params;
-		
-		$list = $resp['data'];
+		$gs = new GoogleSheets();
+		$ssheet = $gs->loadSpreadsheet($this->dragonSheet,300);
+		$list = $ssheet->getSheet();
 		$this->info("Loaded " . count($list) . " member records");
 		$this->loadTimestamp = time();
 		return $this->clubMembers = $list;
@@ -120,6 +122,19 @@ class DragonClub extends Controller {
 			$salt = substr($id, 0, 4);
 			$calcid = $salt . substr(md5($salt . $email . $record['member_number']), 0, 6);
 			if ($id == $calcid)
+				return $record;
+		}
+		return false;
+	}
+	
+	/**
+	 * Retrieve a dragon card
+	 * @param int $num
+	 * @return array|false
+	 */
+	private function getDragonCardByMemberNumber($num) : array {
+		foreach ($this->dragonMembers() as $record) {
+			if ($num == $record['member_number'])
 				return $record;
 		}
 		return false;
