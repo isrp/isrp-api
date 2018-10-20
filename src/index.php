@@ -20,7 +20,7 @@ require __DIR__ . '/dependencies.php';
 require __DIR__ . '/middleware.php';
 
 $host = '[::]';
-$port = 1280;
+$port = getenv("WEB_PORT") ?: 1280;
 
 echo "Starting ISRP API server on $host:$port\n";
 
