@@ -2,7 +2,7 @@ version: 2
 jobs:
   build_release:
     docker:
-      - image: docker:17.05.0-ce-git
+      - image: docker:18.06.1-ce
     branches:
       only:
         - master
@@ -39,7 +39,8 @@ jobs:
             docker push isrp/isrp-api:latest
 
   build_develop:
-    machine: true
+    docker:
+      - image: docker:18.06.1-ce
     branches:
       only:
         - develop
