@@ -39,8 +39,10 @@ DRAGON_CLUB_SHEET=<Dragon club sheet ID>
 
 ```
 docker run -ti --rm \
-	-v $(pwd)/src:/app/src 
+	-v $(pwd)/src:/app/src \
 	-v $(pwd)/service-account.json:/app/service-account.json \
 	--env-file=.secrets \
-	--name isrp-api isrp-api 
+	--name isrp-api isrp-api
 ```
+
+To stop the server, run `docker kill isrp-api`

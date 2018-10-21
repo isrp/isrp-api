@@ -79,6 +79,8 @@ class Sheet {
 	
 	private function parseHeaders(\Google_Service_Sheets_RowData $headerRow) : array {
 		return array_map(function($value){
+			if (is_null($value) or is_null($value->getEffectiveValue()))
+				return null;
 			return $value->getEffectiveValue()->getStringValue();
 		}, $headerRow->getValues());
 	}
