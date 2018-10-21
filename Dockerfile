@@ -9,4 +9,4 @@ EXPOSE 1280
 ADD composer.* /app/
 RUN composer -n --no-ansi install --no-dev -o #1
 ADD src /app/src
-CMD [ /app/src/index.php ]
+CMD /app/src/index.php
