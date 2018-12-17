@@ -53,7 +53,7 @@ class DragonClub extends Controller {
 		$expiration->add(new \DateInterval("P1Y"));
 		if ($expiration->getTimestamp() < time())
 			return $res->withJson(['status' => false],200);
-		return $res->withJson(['status' => true],200);
+		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
 	}
 	
 	/**
