@@ -37,13 +37,16 @@ DRAGON_CLUB_SHEET=<Dragon club sheet ID>
 
 ### Running
 
+To run the server under Docker, you can use the provided Makefile.
+
 ```
-docker run -ti --rm \
-	-v $(pwd)/src:/app/src \
-	-v $(pwd)/service-account.json:/app/service-account.json \
-	--add-host smtp-server:172.17.0.1 \
-	--env-file=.secrets \
-	--name isrp-api isrp-api
+make start
 ```
 
-To stop the server, run `docker kill isrp-api`
+The Makefile will try to update the container image (e.g. for installing updated dependencies) and will also build
+the image from scratch if it does not yet exist or was removed, then:
+
+1. start the container
+2. attach to the container logs and tail them
+3. wait for the user to issue CTRL-C ("break")
+4. stop and remove the container
