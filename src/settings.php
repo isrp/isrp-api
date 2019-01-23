@@ -11,6 +11,6 @@ return [
 			'name' => 'isrp-api',
 			'type' => 'syslog'
 		],
-		'dragon-club-url' => getenv('DRAGON_CLUB_URL'),
+		'dragon-club-sheet' => getenv('DRAGON_CLUB_SHEET'),
 	]
 ];

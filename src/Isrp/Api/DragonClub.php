@@ -6,6 +6,7 @@ use Isrp\Service\RouteConfiguration;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
+use Isrp\Service\Server;
 use Isrp\Tools\GoogleSheets;
 
 class DragonClub extends Controller {
@@ -16,9 +17,9 @@ class DragonClub extends Controller {
 	private $loadTimestamp = 0;
 	private $dragonSheet;
 	
-	public function __construct($app) {
+	public function __construct(Server $app) {
 		parent::__construct($app);
-		$this->dragonSheet = getenv('DRAGON_CLUB_SHEET');
+		$this->dragonSheet = $this->get('settings')['dragon-club-sheet'];
 	}
 	
 	public function getRoutes() {
