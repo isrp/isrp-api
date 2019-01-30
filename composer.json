@@ -13,8 +13,8 @@
 		"monolog/monolog" : "^1.17",
 		"react/http" : "^0.8.3",
 		"crazygoat/slim-reactor" : "^0.2",
-		"blockspring/blockspring" : "dev-master",
-		"google/apiclient": "^2.0"
+		"google/apiclient": "^2.0",
+		"nette/mail": "^2.4"
 	},
 	"autoload" : {
 		"psr-0" : {

@@ -1,6 +1,6 @@
 <?php
 namespace Isrp\Api;
-
+use Nette\Mail\Message;
 use Isrp\Service\Controller;
 use Isrp\Service\RouteConfiguration;
 use Slim\Http\Request;
@@ -27,6 +27,7 @@ class DragonClub extends Controller {
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
 			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
+			new RouteConfiguration(static::GET, '/testMail', 'aaa'),
 		];
 	}
 
@@ -45,7 +46,6 @@ class DragonClub extends Controller {
 		
 		return $res->withJson($card, 200,  JSON_UNESCAPED_UNICODE);
 	}
-	
 	public function checkMemberStatus(Request $req, Response $res, array $args) {
 		$card = $this->getDragonCardByMemberNumber($args['id']);
 		if ($card === false)
@@ -57,6 +57,22 @@ class DragonClub extends Controller {
 		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
 	}
 	
+	//return true if the membrioship is expired
+	private function check2WeakBeforeExparition($card){
+		$expiration = clone $card['Timestamp'];
+		$expiration->add(new \DateInterval("P50W"));
+		if ($expiration->getTimestamp() < time()){
+			return true;
+		}
+		return false;
+	}
+	
+	private function alert2Weak($card){
+		if(check2WeakBeforeExparition($card)){
+			//send mail
+		}
+	}
+
 	/**
 	 * Retrieve a list of dragon members from the database specified under the dragon-members-url
 	 * setting. The resulting array contains a list of records, for each dragon card record. Each
@@ -140,6 +156,19 @@ class DragonClub extends Controller {
 		}
 		return false;
 	}
-	
+	public function aaa(Request $req, Response $res){
+		$mail = new Message;
+		$mail->setFrom('John <john@example.com>')
+			->addTo('yuvalzivony1994@gmail.com')
+			->setSubject('Order Confirmation')
+			->setBody("Hello, Your order has been accepted.");	
+		$mailer = new \Nette\Mail\SmtpMailer([
+			'host' => 'smtp-server',
+			'context' =>  [
+				],
+		]);
+		$mailer->send($mail);
+		$res->write ("aaaaaaaaaaaa");
+	}
 }
 
