@@ -21,13 +21,18 @@ class Server extends SlimReactorApp {
 	public function start($staticContentPath) {
 		$this->logger->info("Starting");
 		$this->mount("/", new BaseApi($this));
-		$this->mount("/club", new DragonClub($this));
+		$this->mount("/club", $dragonClub = new DragonClub($this));
 		
 		$host = '[::]';
 		$port = getenv("WEB_PORT") ?: 1280;
 
 		$this->logger->info("Starting ISRP API server on $host:$port");
 
+		$this->addDailyTask(function() use($dragonClub) {
+			$dragonClub->whatYouWant();
+		});
+		
+		
 		$this->loop = Factory::create();
 		$this->registerTimers();
 		$slimReactor  = new SlimReactor(
