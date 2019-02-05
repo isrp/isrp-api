@@ -27,7 +27,7 @@ class DragonClub extends Controller {
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
 			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
-			new RouteConfiguration(static::GET, '/testMail', 'aaa'),
+			new RouteConfiguration(static::GET, '/testMail', 'sendMail1'),
 		];
 	}
 
@@ -75,9 +75,9 @@ class DragonClub extends Controller {
 		return false;
 	}
 	
-	private function alert2Weak($card){
+	public function alert2Weak($card){
 		if(check2WeakBeforeExparition($card)){
-			//send mail
+			sendMail($card->email);
 		}
 	}
 
@@ -164,10 +164,11 @@ class DragonClub extends Controller {
 		}
 		return false;
 	}
-	public function aaa(Request $req, Response $res){
+	public function sendMail($email){
+		$this-> info("hhhhh $email");
 		$mail = new Message;
-		$mail->setFrom('John <john@example.com>')
-			->addTo('yuvalzivony1994@gmail.com')
+		$mail->setFrom('club@role.org.il')
+			->addTo($email)
 			->setSubject('Order Confirmation')
 			->setBody("Hello, Your order has been accepted.");	
 		$mailer = new \Nette\Mail\SmtpMailer([
@@ -176,7 +177,9 @@ class DragonClub extends Controller {
 				],
 		]);
 		$mailer->send($mail);
-		$res->write ("aaaaaaaaaaaa");
+	}
+	public function sendMail1(){
+		$this->sendMail("levlit1992@gmail.com");
 	}
 }
 

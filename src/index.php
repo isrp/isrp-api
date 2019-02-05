@@ -2,6 +2,7 @@
 <?php
 use CrazyGoat\SlimReactor\{SlimReactor, SlimReactorApp};
 use Isrp\Service\Server;
+use React\EventLoop\Factory;
 
 if (PHP_SAPI != 'cli') {
 	throw new RuntimeException('Can only run in cli');
@@ -19,16 +20,8 @@ $app = new Server($settings);
 require __DIR__ . '/dependencies.php';
 require __DIR__ . '/middleware.php';
 
-$host = '[::]';
-$port = getenv("WEB_PORT") ?: 1280;
+$app->start(__DIR__.'/../public');
 
-echo "Starting ISRP API server on $host:$port\n";
-
-$slimReactor  = new SlimReactor(
-	$app,
-	[
-		'socket' => "$host:$port",
-		'staticContentPath' => __DIR__.'/../public'
-	]
-	);
-$slimReactor->run();
+$app->addDailyTask(function(){
+	echo "Running daily";
+});
