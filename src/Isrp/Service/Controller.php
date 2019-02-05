@@ -10,11 +10,11 @@ abstract class Controller {
 	const PATCH = 'PATCH';
 	
 	/**
-	 * @var \Slim\App
+	 * @var Server Main application instance, used to provide ancillary services such as daily task execution
 	 */
 	protected $app;
 	
-	public function __construct(\Slim\App $app) {
+	public function __construct(Server $app) {
 		$this->app = $app;
 	}
 	
