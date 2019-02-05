@@ -57,6 +57,14 @@ class DragonClub extends Controller {
 		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
 	}
 	
+	private function damYouYval(){
+		foreach ($this->dragonMembers() as $card) {
+			$objectCard = (object)$card;
+			alert2Weak($objectCard);
+			}
+			return true;
+	}
+
 	//return true if the membrioship is expired
 	private function check2WeakBeforeExparition($card){
 		$expiration = clone $card['Timestamp'];
