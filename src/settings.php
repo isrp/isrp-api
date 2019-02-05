@@ -9,7 +9,7 @@ return [
 		// Monolog settings
 		'logger' => [
 			'name' => 'isrp-api',
-			'type' => 'syslog'
+			'type' => 'stderr'
 		],
 		'dragon-club-sheet' => getenv('DRAGON_CLUB_SHEET'),
 	]
