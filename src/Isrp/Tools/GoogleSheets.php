@@ -19,7 +19,7 @@ class GoogleSheets {
 		error_log("Retrieving spreadsheet $sheetid");
 		$sdata = $service->spreadsheets->get($sheetid, [
 			'includeGridData' => true,
-			'ranges' => 'A1:Z'.$rows,
+			'ranges' => ['A1:Z'.$rows,"email!A1:C3"]
 		]);
 		error_log("Loaded data from: " . $sdata->getSpreadsheetUrl());
 		return new Sheet($sdata);

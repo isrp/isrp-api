@@ -8,6 +8,7 @@ use Slim\Http\Response;
 
 use Isrp\Service\Server;
 use Isrp\Tools\GoogleSheets;
+use Isrp\Tools\GoogleSheets\Sheet;
 
 class DragonClub extends Controller {
 	
@@ -27,7 +28,7 @@ class DragonClub extends Controller {
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
 			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
-			new RouteConfiguration(static::GET, '/testMail', 'sendMail1'),
+			new RouteConfiguration(static::GET, '/testMail', 'alertRealUsers'),
 		];
 	}
 
@@ -57,19 +58,19 @@ class DragonClub extends Controller {
 		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
 	}
 	
-	private function alertRealUsers(){
+	public function alertRealUsers(){
 		foreach ($this->dragonMembers() as $card) {
 			$objectCard = (object)$card;
 			if (!empty($objectCard->alreadyalerted)) continue;
 			if (empty($objectCard->email)) continue;
 			if (empty($objectCard->Timestamp))continue;
-			alert2Week($objectCard);
+			$this->alertTwoWeeks($objectCard);
 			}
 			return true;
 	}
 
 	//return true if the membrioship is expired
-	private function check2WeakBeforeExparition($card){
+	public function checkTwoWeekBeforeExparition($card){
 		$expiration = clone $card->Timestamp;
 		$expiration->add(new \DateInterval("P50W"));
 		if ($expiration->getTimestamp() < time()){
@@ -78,10 +79,10 @@ class DragonClub extends Controller {
 		return false;
 	}
 	
-	public function alert2Weak($card){
-		if(!check2WeakBeforeExparition($card))
+	public function alertTwoWeeks($card){
+		if(!$this->checkTwoWeekBeforeExparition($card))
 			return false;
-		sendMail($card);
+		$this->sendMail($card);
 		$googleSheet=$this->getGoogleShet();
 		$cell=$googleSheet->getSpecificCell($card->index,"alreadyalerted");
 		$googleSheet->writeBooleanCell($cell,true);
@@ -180,12 +181,12 @@ class DragonClub extends Controller {
 		$subject=$googleSheet->readCell($googleSheet->getSpecificCell(0,"subject","email"));
 		$text=$googleSheet->readCell($googleSheet->getSpecificCell(0,"text","email"));
 		$text=preg_replace_callback("/\([^\)]+\)/",function(array $matches) : string{
-			return $card->{$matches[0]};
+			return "".$card->{$matches[0]};
 		},$text);
-		$this-> info("hhhhh $email");
+		$this-> info("hhhhh $card->email");
 		$mail = new Message;
 		$mail->setFrom('club@role.org.il')
-			->addTo($email)
+			->addTo($card->email)
 			->setSubject($subject)
 			->setBody($text);	
 		$mailer = new \Nette\Mail\SmtpMailer([

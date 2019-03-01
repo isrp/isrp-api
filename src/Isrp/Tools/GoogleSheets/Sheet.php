@@ -58,11 +58,18 @@ class Sheet {
 			throw new \Exception("No sheet with index $sheet");
 		$rows = $sobj->getData()[0]->getRowData();
 		$headers = $this->parseHeaders(array_shift($rows));
-		$index=array_search($header,$header);
-		return $rows[$row]->getValues()[$index];
+		$index=array_search($header,$headers);
+		var_dump ($header,$headers,$index);
+		$rowData=$rows[$row]->getValues();
+		$cell=$rowData[$index];
+		if(!is_null($cell)){return $cell;}
+		$cell1=new \Google_Service_Sheets_CellData	;
+		$rowData[$index]=$cell1;
+		$rows[$row]->setValues($rowData);
+		return $cell1;
 	}
 
-	private function readCell(\Google_Service_Sheets_CellData $cell) {
+	public function readCell(\Google_Service_Sheets_CellData $cell) {
 		if ($this->isDate($cell))
 			return $this->toDate($cell);
 		$val = $cell->getEffectiveValue();
@@ -101,14 +108,14 @@ class Sheet {
 	}
 	
 	public function findSheetByName($name) : int {
-		foreach ($this->sheets as $sheet) {
+		foreach ($this->sheets as $idx => $sheet) {
 			if (strcasecmp($name, $sheet->getProperties()->getTitle()) == 0)
-				return $sheet->getProperties()->getIndex();
+				return $idx; 
 		}
 		throw new \Exception("Failed to find sheet named $name");
 	}
 	public function writeBooleanCell(\Google_Service_Sheets_CellData $cell, $value){
-		$newValue= new \Google_Servise_Sheets_ExtendValue;
+		$newValue= new \Google_Service_Sheets_ExtendedValue;
 		$newValue->setBoolValue($value);
 		$cell->setEffectiveValue($newValue);
 	}
