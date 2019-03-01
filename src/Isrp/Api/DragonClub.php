@@ -57,10 +57,13 @@ class DragonClub extends Controller {
 		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
 	}
 	
-	private function damYouYval(){
+	private function alertRealUsers(){
 		foreach ($this->dragonMembers() as $card) {
 			$objectCard = (object)$card;
-			alert2Weak($objectCard);
+			if (!empty($objectCard['alreadyalerted'])) continue;
+			if (empty($objectCard['email'])) continue;
+			if (empty($objectCard['Timestamp']))continue;
+			alert2Week($objectCard);
 			}
 			return true;
 	}
@@ -88,7 +91,6 @@ class DragonClub extends Controller {
 	function getGoogleShet() : Sheet{
 		$gs = new GoogleSheets();
 		return $gs->loadSpreadsheet($this->dragonSheet,300);
-
 	}
 
 	/**
