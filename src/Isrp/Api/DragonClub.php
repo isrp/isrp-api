@@ -67,7 +67,7 @@ class DragonClub extends Controller {
 
 	//return true if the membrioship is expired
 	private function check2WeakBeforeExparition($card){
-		$expiration = clone $card['Timestamp'];
+		$expiration = clone $card->Timestamp;
 		$expiration->add(new \DateInterval("P50W"));
 		if ($expiration->getTimestamp() < time()){
 			return true;
@@ -76,9 +76,19 @@ class DragonClub extends Controller {
 	}
 	
 	public function alert2Weak($card){
-		if(check2WeakBeforeExparition($card)){
-			sendMail($card->email);
-		}
+		if(!check2WeakBeforeExparition($card))
+			return false;
+		sendMail($card);
+		$googleSheet=$this->getGoogleShet();
+		$cell=$googleSheet->getSpecificCell($card->index,"alreadyalerted");
+		$googleSheet->writeBooleanCell($cell,true);
+		return true;
+	}
+
+	function getGoogleShet() : Sheet{
+		$gs = new GoogleSheets();
+		return $gs->loadSpreadsheet($this->dragonSheet,300);
+
 	}
 
 	/**
@@ -91,8 +101,7 @@ class DragonClub extends Controller {
 		if (!is_null($this->clubMembers) and ($this->loadTimestamp + static::CACHE_TIME) > time())
 			return $this->clubMembers;
 		
-		$gs = new GoogleSheets();
-		$ssheet = $gs->loadSpreadsheet($this->dragonSheet,300);
+		$ssheet=$this->getGoogleShet();
 		$list = $ssheet->getSheet();
 		$this->info("Loaded " . count($list) . " member records");
 		$this->loadTimestamp = time();
@@ -164,13 +173,19 @@ class DragonClub extends Controller {
 		}
 		return false;
 	}
-	public function sendMail($email){
+	public function sendMail($card){
+		$googleSheet=$this->getGoogleShet();
+		$subject=$googleSheet->readCell($googleSheet->getSpecificCell(0,"subject","email"));
+		$text=$googleSheet->readCell($googleSheet->getSpecificCell(0,"text","email"));
+		$text=preg_replace_callback("/\([^\)]+\)/",function(array $matches) : string{
+			return $card->{$matches[0]};
+		},$text);
 		$this-> info("hhhhh $email");
 		$mail = new Message;
 		$mail->setFrom('club@role.org.il')
 			->addTo($email)
-			->setSubject('Order Confirmation')
-			->setBody("Hello, Your order has been accepted.");	
+			->setSubject($subject)
+			->setBody($text);	
 		$mailer = new \Nette\Mail\SmtpMailer([
 			'host' => 'smtp-server',
 			'context' =>  [

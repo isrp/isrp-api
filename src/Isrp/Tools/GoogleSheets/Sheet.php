@@ -26,8 +26,9 @@ class Sheet {
 		$this->data = $sheetsResp;
 		$this->sheets = $sheetsResp->getSheets();
 	}
-	
+
 	public function getSheet($sheet = 0) {
+		$cnt=0;
 		if (!is_numeric($sheet))
 			$sheet = $this->findSheetByName($sheet);
 		$sobj = @$this->sheets[$sheet];
@@ -35,8 +36,10 @@ class Sheet {
 			throw new \Exception("No sheet with index $sheet");
 		$rows = $sobj->getData()[0]->getRowData();
 		$headers = $this->parseHeaders(array_shift($rows));
-		return array_map(function($row) use($headers) {
-			$rowdata = [];
+		return array_map(function($row) use($headers, $cnt) {
+			$rowdata = [
+				"index" => $cnt++
+			];
 			$vals = $row->getValues();
 			for ($i = 0; $i < count($headers); $i++) {
 				if (is_null($vals[$i]))
@@ -47,6 +50,18 @@ class Sheet {
 		}, $rows);
 	}
 	
+	function getSpecificCell($row,$header,$sheet = 0) : \Google_Service_Sheets_CellData {
+		if (!is_numeric($sheet))
+			$sheet = $this->findSheetByName($sheet);
+		$sobj = @$this->sheets[$sheet];
+		if (!$sobj)
+			throw new \Exception("No sheet with index $sheet");
+		$rows = $sobj->getData()[0]->getRowData();
+		$headers = $this->parseHeaders(array_shift($rows));
+		$index=array_search($header,$header);
+		return $rows[$row]->getValues()[$index];
+	}
+
 	private function readCell(\Google_Service_Sheets_CellData $cell) {
 		if ($this->isDate($cell))
 			return $this->toDate($cell);
@@ -91,6 +106,11 @@ class Sheet {
 				return $sheet->getProperties()->getIndex();
 		}
 		throw new \Exception("Failed to find sheet named $name");
+	}
+	public function writeBooleanCell(\Google_Service_Sheets_CellData $cell, $value){
+		$newValue= new \Google_Servise_Sheets_ExtendValue;
+		$newValue->setBoolValue($value);
+		$cell->setEffectiveValue($newValue);
 	}
 }
 

@@ -10,6 +10,7 @@ use CrazyGoat\SlimReactor\SlimReactor;
 use Isrp\Api\DragonClub;
 use Isrp\Api\BaseApi;
 
+use \DateInterval;
 use \DateTime;
 use \DateTimeInterface;
 
