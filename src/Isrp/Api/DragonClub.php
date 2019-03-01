@@ -60,9 +60,9 @@ class DragonClub extends Controller {
 	private function alertRealUsers(){
 		foreach ($this->dragonMembers() as $card) {
 			$objectCard = (object)$card;
-			if (!empty($objectCard['alreadyalerted'])) continue;
-			if (empty($objectCard['email'])) continue;
-			if (empty($objectCard['Timestamp']))continue;
+			if (!empty($objectCard->alreadyalerted)) continue;
+			if (empty($objectCard->email)) continue;
+			if (empty($objectCard->Timestamp))continue;
 			alert2Week($objectCard);
 			}
 			return true;
@@ -180,9 +180,6 @@ class DragonClub extends Controller {
 				],
 		]);
 		$mailer->send($mail);
-	}
-	public function sendMail1(){
-		$this->sendMail("levlit1992@gmail.com");
 	}
 }
 
