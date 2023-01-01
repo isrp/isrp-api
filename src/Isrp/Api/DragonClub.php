@@ -168,7 +168,7 @@ class DragonClub extends Controller {
 	private function getDragonCardByEmail(string $email) : array|false {
 		$email = trim($email);
 		foreach ($this->dragonMembers() as $record) {
-			$recemail = trim($record['email']);
+			$recemail = @trim($record['email']);
 			if (!empty($recemail) and $email == $recemail)
 				return $record;
 		}
