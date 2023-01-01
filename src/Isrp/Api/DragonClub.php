@@ -26,15 +26,26 @@ class DragonClub extends Controller {
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
 			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
+			new RouteConfiguration(static::GET, '/email/{phone}', 'getByPhone'),
 		];
 	}
 
 	public function getByEmail(Request $req, Response $res, array $args) {
-		$card = $this->getDragonId($args['email']);
+		$card = $this->getDragonCardByEmail($args['email']);
 		if ($card === false)
 			return $res->withJson([ 'status' => false ], 404);
 		
-		return $res->withJson([ 'status' => true, 'token' => $card], 200,  JSON_UNESCAPED_UNICODE);
+		return $res->withJson([ 'status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'],
+							  'token' => $this->generateMemberToken($card) ], 200,  JSON_UNESCAPED_UNICODE);
+	}
+	
+	public function getByPhone(Request $req, Response $res, array $args) {
+		$card = $this->getDragonCardByPhone($args['phone']);
+		if ($card === false)
+			return $res->withJson([ 'status' => false ], 404);
+		
+		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ], 200,
+							  JSON_UNESCAPED_UNICODE);
 	}
 	
 	public function getByToken(Request $req, Response $res, array $args) {
@@ -53,7 +64,7 @@ class DragonClub extends Controller {
 		$expiration->add(new \DateInterval("P1Y"));
 		if ($expiration->getTimestamp() < time())
 			return $res->withJson(['status' => false],200);
-		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ],200);
+		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ], 200);
 	}
 	
 	/**
@@ -86,11 +97,23 @@ class DragonClub extends Controller {
 			$recemail = trim($record['email']);
 			if (!empty($recemail) and $email == $recemail) {
 				$this->info("Found dragon user $email at ".print_r($record, true));
-				$salt = bin2hex(random_bytes(2));
-				return $salt . substr(md5($salt . $email.$record['member_number']), 0, 6);
+				return $this->generateMemberToken($record);
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Create an authentication token for a club member
+	 * @param array $card Member card to generate a token for
+	 * @retun string|boolean
+	 */
+	private function generateMemberToken($card) {
+		if (!isset($card['member_number']))
+			return false;
+		$email = trim($record['email']);
+		$salt = bin2hex(random_bytes(2));
+		return $salt . substr(md5($salt . $email.$card['member_number']), 0, 6);
 	}
 	
 	/**
@@ -128,13 +151,43 @@ class DragonClub extends Controller {
 	}
 	
 	/**
-	 * Retrieve a dragon card
-	 * @param int $num
-	 * @return array|false
+	 * Retrieve a dragon card by the member's card number
+	 * @param int $num card number
+	 * @return array|false either the member card details or false if no such member card was found
 	 */
 	private function getDragonCardByMemberNumber($num) : array {
 		foreach ($this->dragonMembers() as $record) {
 			if ($num == $record['member_number'])
+				return $record;
+		}
+		return false;
+	}
+	
+	/**
+	 * Retrieve a dragon card by the member's registered email address
+	 * @param string $email Member's registration email
+	 * @return array|false either the member card details or false if no such member card was found
+	 */
+	private function getDragonCardByEmail($email) : array {
+		$email = trim($email);
+		foreach ($this->dragonMembers() as $record) {
+			$recemail = trim($record['email']);
+			if (!empty($recemail) and $email == $recemail) {
+				return $record;
+		}
+		return false;
+	}
+	
+	/**
+	 * Retrieve a dragon card by the member's registered phone number
+	 * @param string $phone Member's registered phone number
+	 * @return array|false either the member card details or false if no such member card was found
+	 */
+	private function getDragonCardByPhone($phone) : array {
+		$phone = preg_replace('/(^0)\D+/','', $phone);
+		foreach ($this->dragonMembers() as $record) {
+			$test = preg_replace('/(^0)\D+/', '', $record['phone'])
+			if ($phone == $test)
 				return $record;
 		}
 		return false;
