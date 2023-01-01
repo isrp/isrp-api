@@ -3,7 +3,8 @@ namespace Isrp\Api;
 
 use Isrp\Service\Controller;
 use Isrp\Service\RouteConfiguration;
-use Slim\Http\Request;
+
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Http\Response;
 
 use Isrp\Tools\GoogleSheets;
@@ -14,19 +15,13 @@ class DragonClub extends Controller {
 	
 	private $clubMembers = null;
 	private $loadTimestamp = 0;
-	private $dragonSheet;
-	
-	public function __construct($app) {
-		parent::__construct($app);
-		$this->dragonSheet = getenv('DRAGON_CLUB_SHEET');
-	}
 	
 	public function getRoutes() {
 		return [
 			new RouteConfiguration(static::GET, '/email/{email}', 'getByEmail'),
 			new RouteConfiguration(static::GET, '/token/{token}', 'getByToken'),
 			new RouteConfiguration(static::GET, '/member/{id}', 'checkMemberStatus'),
-			new RouteConfiguration(static::GET, '/email/{phone}', 'getByPhone'),
+			new RouteConfiguration(static::GET, '/phone/{phone}', 'getByPhone'),
 		];
 	}
 
@@ -60,11 +55,13 @@ class DragonClub extends Controller {
 		$card = $this->getDragonCardByMemberNumber($args['id']);
 		if ($card === false)
 			return $res->withJson(['status' => false],404);
-		$expiration = clone $card['Timestamp'];
-		$expiration->add(new \DateInterval("P1Y"));
-		if ($expiration->getTimestamp() < time())
-			return $res->withJson(['status' => false],200);
-		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ], 200);
+		if (!is_null($card['Timestamp'])) {
+			$expiration = clone $card['Timestamp'];
+			$expiration->add(new \DateInterval("P1Y"));
+			if ($expiration->getTimestamp() < time())
+				return $res->withJson(['status' => false],200);
+		}
+		return $res->withJson(['status' => true, 'name' => $card['firstname'] . ' ' . $card['lastname'] ], 200, JSON_UNESCAPED_UNICODE);
 	}
 	
 	/**
@@ -78,7 +75,7 @@ class DragonClub extends Controller {
 			return $this->clubMembers;
 		
 		$gs = new GoogleSheets();
-		$ssheet = $gs->loadSpreadsheet($this->dragonSheet,300);
+		$ssheet = $gs->loadSpreadsheet($this->get('dragon-club-sheet'), 300);
 		$list = $ssheet->getSheet();
 		$this->info("Loaded " . count($list) . " member records");
 		$this->loadTimestamp = time();
@@ -155,7 +152,7 @@ class DragonClub extends Controller {
 	 * @param int $num card number
 	 * @return array|false either the member card details or false if no such member card was found
 	 */
-	private function getDragonCardByMemberNumber($num) : array {
+	private function getDragonCardByMemberNumber(int $num) : array|false {
 		foreach ($this->dragonMembers() as $record) {
 			if ($num == $record['member_number'])
 				return $record;
@@ -168,11 +165,11 @@ class DragonClub extends Controller {
 	 * @param string $email Member's registration email
 	 * @return array|false either the member card details or false if no such member card was found
 	 */
-	private function getDragonCardByEmail($email) : array {
+	private function getDragonCardByEmail(string $email) : array|false {
 		$email = trim($email);
 		foreach ($this->dragonMembers() as $record) {
 			$recemail = trim($record['email']);
-			if (!empty($recemail) and $email == $recemail) {
+			if (!empty($recemail) and $email == $recemail)
 				return $record;
 		}
 		return false;
@@ -183,10 +180,13 @@ class DragonClub extends Controller {
 	 * @param string $phone Member's registered phone number
 	 * @return array|false either the member card details or false if no such member card was found
 	 */
-	private function getDragonCardByPhone($phone) : array {
-		$phone = preg_replace('/(^0)\D+/','', $phone);
+	private function getDragonCardByPhone(string $phone) : array|false {
+		$phone = preg_replace('/(^0|972)|\D+/','', trim($phone)) or die("error");
 		foreach ($this->dragonMembers() as $record) {
-			$test = preg_replace('/(^0)\D+/', '', $record['phone'])
+			if (!$record['phone'] || $record['phone'] == '1') // some phone fields in the spreadsheet are set to "1" for some weird reason. Maybe has to do with the old google form
+				continue;
+			$test = preg_replace('/(^0|972)|\D+/', '', trim($record['phone']));
+			$this->debug("Checking '$phone' against '$test'");
 			if ($phone == $test)
 				return $record;
 		}
@@ -194,4 +194,3 @@ class DragonClub extends Controller {
 	}
 	
 }
-

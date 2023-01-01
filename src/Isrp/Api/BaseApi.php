@@ -3,11 +3,11 @@ namespace Isrp\Api;
 
 use Isrp\Service\Controller;
 use Isrp\Service\RouteConfiguration;
-use Slim\Http\Request;
+
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Http\Response;
 
 class BaseApi extends Controller {
-
 	
 	public function getRoutes() {
 		return [
@@ -15,9 +15,10 @@ class BaseApi extends Controller {
 		];
 	}
 	
-	public function keepalive(Request $req, Response $res) {
+	public function keepalive(Request $req, Response $res, array $args) {
 		$this->info("Hello");
-		return $res->write("hello\n");
+		$res->write("hello\n");
+		return $res;
 	}
 	
 }
