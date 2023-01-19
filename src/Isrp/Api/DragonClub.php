@@ -103,13 +103,14 @@ class DragonClub extends Controller {
 	/**
 	 * Create an authentication token for a club member
 	 * @param array $card Member card to generate a token for
+	 * @param salt pervious salt, if known, otherwise a new salt is generated
 	 * @retun string|boolean
 	 */
-	private function generateMemberToken($card) {
+	private function generateMemberToken($card, $salt = null) {
 		if (!isset($card['member_number']))
 			return false;
 		$email = trim($record['email']);
-		$salt = bin2hex(random_bytes(2));
+		$salt = $salt ?: bin2hex(random_bytes(2));
 		return $salt . substr(md5($salt . $email.$card['member_number']), 0, 6);
 	}
 	
@@ -122,9 +123,7 @@ class DragonClub extends Controller {
 		$id = trim($id);
 		foreach ($this->dragonMembers() as $record) {
 			$email = trim($record['email']);
-			$salt = substr($id, 0, 4);
-			$calcid = $salt . substr($salt . md5($email.$record['member_number']), 0, 6);
-			if ($id == $calcid)
+			if ($id == $this->generateMemberToken($record, substr($id, 0, 4)))
 				return true;
 		}
 		return false;
@@ -138,10 +137,9 @@ class DragonClub extends Controller {
 	private function getDragonCard($id) {
 		$id = trim($id);
 		foreach ($this->dragonMembers() as $record) {
-			$email = trim($record['email']);
-			$salt = substr($id, 0, 4);
-			$calcid = $salt . substr(md5($salt . $email . $record['member_number']), 0, 6);
-			if ($id == $calcid)
+			if (!@$record['member_number']) continue;
+			$email = trim($record['email'] ?: '');
+			if ($id == $this->generateMemberToken($record, substr($id, 0, 4)))
 				return $record;
 		}
 		return false;
